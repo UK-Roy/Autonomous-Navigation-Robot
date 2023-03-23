@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<launch>
+ <!-- Start rosserial Arduino node -->
+  <node name="serial_node" pkg="rosserial_python" type="serial_node.py" output="screen">
+      <rosparam file="$(find robot_bringup)/config/start/serial_params.yaml" command="load" />
+  </node>
+
+  <node pkg="robot_bringup" type="Differential_TF" name="Differential_TF" output="screen">
+    <rosparam file="$(find robot_bringup)/config/start/odom_encoder_params.yaml" command="load" />
+    <remap from="odom" to="/ommp_velocity_controller/odom"/>
+  </node>
+
+  <node name="Cmd_Vel_to_Arduino" pkg="robot_bringup" type="Cmd_Vel_to_Arduino" respawn="false"
+     output="screen"/>
+
+
+</launch>
