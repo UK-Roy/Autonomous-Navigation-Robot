@@ -59,20 +59,16 @@ class Odometry_calc{
 
         ros::Time current_time, last_time;
 
-
         void encoderCb(const std_msgs::Int64MultiArray::ConstPtr& ticks);
-
 
         void init_variables();
 
         void get_node_params();
 
-
         void update();
 };
 
 Odometry_calc::Odometry_calc(){
-
 
 	init_variables();
 
@@ -80,28 +76,19 @@ Odometry_calc::Odometry_calc(){
 
 	wheel_sub = n.subscribe("/encoder_ticks",30, &Odometry_calc::encoderCb, this);
 
-
-
   	odom_pub = n.advertise<nav_msgs::Odometry>("/ommp_velocity_controller", 30);   
   	
-
-
 	//Retrieving parameters of this node
 	get_node_params();
 }
-
-
 // initializing all the variable
 void Odometry_calc::init_variables()
 {
-
-
 	prev_lencoder = 0;
 	prev_rencoder = 0;
 
 	lmult = 0;
 	rmult = 0;
-
 
 	left = 0;
 	right = 0;
@@ -115,9 +102,6 @@ void Odometry_calc::init_variables()
 
 	base_width = 0.23;
 
-	
-	
-
 	encoder_low_wrap = ((encoder_max - encoder_min) * 0.3) + encoder_min ;
 	encoder_high_wrap = ((encoder_max - encoder_min) * 0.7) + encoder_min ;
 
@@ -125,7 +109,6 @@ void Odometry_calc::init_variables()
 	t_next = ros::Time::now() + t_delta;
 	
 	then = ros::Time::now();
-
 
 	enc_left = 0;
 	enc_right = 0;
@@ -137,13 +120,10 @@ void Odometry_calc::init_variables()
 	
 	current_time = ros::Time::now();
   	last_time = ros::Time::now();
-
 }
-
 
 void Odometry_calc::get_node_params(){
 
-	
         if(n.getParam("rate", rate)){
 	 
 		ROS_INFO_STREAM("Rate from param" << rate);	       
@@ -154,38 +134,30 @@ void Odometry_calc::get_node_params(){
 		ROS_INFO_STREAM("Encoder min from param" << encoder_min);	       
 	}
 
-
         if(n.getParam("encoder_max", encoder_max)){
 	 
 		ROS_INFO_STREAM("Encoder max from param" << encoder_max);	       
 	}
-
-
+	
         if(n.getParam("wheel_low_wrap", encoder_low_wrap)){
 	 
 		ROS_INFO_STREAM("wheel_low_wrap from param" << encoder_low_wrap);	       
 	}
-
 
         if(n.getParam("wheel_high_wrap", encoder_high_wrap)){
 	 
 		ROS_INFO_STREAM("wheel_high_wrap from param" << encoder_high_wrap);	       
 	}
 
-
-
-
         if(n.getParam("ticks_meter", ticks_meter)){
 	 
 		ROS_INFO_STREAM("Ticks meter" << ticks_meter);	       
 	}
 
-
         if(n.getParam("base_width", base_width )){
 	 
 		ROS_INFO_STREAM("Base Width" << base_width );	       
 	}
-
 
 /*
 	ROS_INFO_STREAM("Encoder min" << encoder_min);
@@ -195,28 +167,18 @@ void Odometry_calc::get_node_params(){
 */
 	ROS_INFO_STREAM("ticks meter" << ticks_meter);
 	ROS_INFO_STREAM("base width" << base_width);
-
-
-
 }
-
 
 //Spin function
 void Odometry_calc::spin(){
-
      ros::Rate loop_rate(rate);
 
      while (ros::ok())
 	{
 		update();
 		loop_rate.sleep();
-	
 	}
-
-
 }
-
-
 
 //Update function
 void Odometry_calc::update(){
@@ -229,15 +191,11 @@ void Odometry_calc::update(){
 
 	double d_left, d_right, d, th,x,y;
 
-
 	if ( now > t_next) {
 
 		elapsed = now.toSec() - then.toSec(); 
-
  // 	        ROS_INFO_STREAM("elapsed =" << elapsed);
 
-		
-		
 		if(enc_left == 0){
 			d_left = 0;
 			d_right = 0;
@@ -253,15 +211,13 @@ void Odometry_calc::update(){
 		d = (d_left + d_right ) / 2.0;
 
 //		ROS_INFO_STREAM("d" << d);
-
-
+		
 		th = ( d_right - d_left ) / base_width;
 		
 		dx = d /elapsed;
 
 		dr = th / elapsed;
 
-	
 		if ( d != 0){
 
                 	x = cos( th ) * d;
@@ -269,12 +225,10 @@ void Odometry_calc::update(){
                 	// calculate the final position of the robot
                 	x_final = x_final + ( cos( theta_final ) * x - sin( theta_final ) * y );
                 	y_final = y_final + ( sin( theta_final ) * x + cos( theta_final ) * y );
-
 			}
 
            	 if( th != 0)
                 	theta_final = theta_final + th;
-
 		    geometry_msgs::Quaternion odom_quat ;
 
 		    odom_quat.x = 0.0;
@@ -326,33 +280,19 @@ void Odometry_calc::update(){
 //		    ROS_INFO_STREAM("dy =" << y_final);
 
 	            ros::spinOnce();
-
-
 		}
 	 else { ; }
 //		ROS_INFO_STREAM("Not in loop");
-		
-		
-
-
-
 }
 
 
 //encoder callback
 
 void Odometry_calc::encoderCb(const std_msgs::Int64MultiArray::ConstPtr& ticks)
-
 {
-
-
 // ROS_INFO_STREAM("Right tick" << right_ticks->data);
-
-
 	double l_enc = int((ticks->data[0] + ticks->data[2])/2.);
 	double r_enc = int((ticks->data[1] + ticks->data[3])/2.);
-
-
 
 	if((r_enc < encoder_low_wrap) && (prev_lencoder > encoder_high_wrap))
 	{
@@ -360,24 +300,16 @@ void Odometry_calc::encoderCb(const std_msgs::Int64MultiArray::ConstPtr& ticks)
 		rmult = rmult + 1;
 	}
 	
-
 	if((r_enc > encoder_high_wrap) && (prev_lencoder < encoder_low_wrap))
-
 	{
-		
 		rmult = rmult - 1;
 	}
 	if((l_enc < encoder_low_wrap) && (prev_rencoder > encoder_high_wrap))
 	{
-		
 		lmult = lmult + 1;
 	}
-	
-
 	if((l_enc > encoder_high_wrap) && (prev_rencoder < encoder_low_wrap))
-
 	{
-		
 		lmult = lmult - 1;
 	}
 	right = 1.0 * (r_enc + rmult * (encoder_max - encoder_min ));
@@ -386,19 +318,13 @@ void Odometry_calc::encoderCb(const std_msgs::Int64MultiArray::ConstPtr& ticks)
 	prev_lencoder = l_enc;
 
 //	ROS_INFO_STREAM("Right " << right);
-
-
-
 }
 
 int main(int argc, char **argv)
-
 {
 	ros::init(argc, argv,"diff_tf");
 	Odometry_calc obj;
 	obj.spin();
-
-
+	
 	return 0;
-
 }
