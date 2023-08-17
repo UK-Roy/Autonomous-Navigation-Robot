@@ -21,12 +21,10 @@ double Setpoint_br, Input_br, Output_br;
 
 double aggKp=450, aggKi=1800, aggKd=0;
 
-
 PID myPID_fl(&Input_fl, &Output_fl, &Setpoint_fl, aggKp, aggKi, aggKd, DIRECT);
 PID myPID_fr(&Input_fr, &Output_fr, &Setpoint_fr, aggKp, aggKi, aggKd, DIRECT);
 PID myPID_bl(&Input_bl, &Output_bl, &Setpoint_bl, aggKp, aggKi, aggKd, DIRECT);
 PID myPID_br(&Input_br, &Output_br, &Setpoint_br, aggKp, aggKi, aggKd, DIRECT);
-
 
 Encoder encoder_fleft(36, 37);
 Encoder encoder_fright(34, 35); //pin is changed from original (35, 34)
@@ -68,10 +66,8 @@ void onPid_cb(const std_msgs::Int16MultiArray& cmd_msg)
     myPID_br.SetTunings(p, i, d);
 }
 
-
 void onTwist(const std_msgs::Float32MultiArray& msg)
 {
-
   float left_speed = msg.data[0];
   float right_speed = msg.data[1];
   Setpoint_fl = left_speed;
@@ -84,7 +80,6 @@ void onTwist(const std_msgs::Float32MultiArray& msg)
   else{
     wtf = false;
     }
-
 }
 
 ros::Subscriber<std_msgs::Float32MultiArray> cmd_sub("set_vel", &onTwist);
@@ -108,8 +103,6 @@ void Move_motor(int speed_pwm,const uint8_t pwm,const uint8_t forw,const uint8_t
     analogWrite(pwm, abs(speed_pwm));
   }
 }
-
-
 // Initialize pins for forward movement
 
 void setpins()
@@ -136,7 +129,6 @@ void setpins()
   digitalWrite(RB_BACK, LOW);
 }
 
-
 //void reset Integral error when we stop
 void reset_pid_Ki()
 {
@@ -153,17 +145,13 @@ void reset_pid_Ki()
   myPID_fr.SetMode(AUTOMATIC);
   myPID_bl.SetMode(AUTOMATIC);
   myPID_br.SetMode(AUTOMATIC);
-
-
 }
 
 void setup() {
-
   // 115200 baud rate
   nh.getHardware()->setBaud(115200);
 
   // Pid setup
-  
   myPID_fl.SetOutputLimits(-255, 255);
   myPID_fr.SetOutputLimits(-255, 255);
   myPID_bl.SetOutputLimits(-255, 255);
@@ -179,12 +167,10 @@ void setup() {
   myPID_bl.SetSampleTime(20);
   myPID_br.SetSampleTime(20);
 
-
   // setup pins and fix encoders
   setpins();
 
-  // ros node setup
-  
+  // ros node setup  
   nh.initNode();
 
   //encoder ticks array initialiazation
@@ -211,7 +197,6 @@ void setup() {
   //nh.advertise(vel_pub);
   nh.subscribe(cmd_sub);
   nh.subscribe(pid_sub);
-  
 }
 
 unsigned long prev = 0;
@@ -237,9 +222,7 @@ void loop() {
   // Publish encoder ticks to calculate odom on Jetson Nano side
   enc_ticks_pub.publish(&enc_ticks);
 
-
  // calculate time and current velocity
-
   unsigned long now = millis();
   Input_fl = (float(ct1 - old_ct1) / ticks_per_meter) / ((now - prev) / 1000.0);
   Input_fr = (float(ct2 - old_ct2) / ticks_per_meter) / ((now - prev) / 1000.0);
@@ -256,20 +239,17 @@ void loop() {
   myPID_bl.Compute();
   myPID_br.Compute();
 
-
   if(wtf){
     reset_pid_Ki();  
   }
 
-  // Move the motors with the output of the pid
-  
+  // Move the motors with the output of the pid  
   Move_motor(Output_fl,LF_PWM,LF_FORW,LF_BACK);
   Move_motor(Output_fr,RF_PWM,RF_FORW,RF_BACK);
   Move_motor(Output_bl,LB_PWM,LB_FORW,LB_BACK);
   Move_motor(Output_br,RB_PWM,RB_FORW,RB_BACK);
 
   // spin the ros node
-  
   nh.spinOnce();
   // take the old encoder ticks and time for calculating velocity
   old_ct1 = ct1;
@@ -280,5 +260,4 @@ void loop() {
   prev = now;
   
   delay(25);
-
 }
